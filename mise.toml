@@ -32,10 +32,15 @@ echo "Exporting artifacts..."
 '''
 
 [tasks.test]
-description = "Run tests for the appstoreconnect-smoke package."
+description = "Run package tests (cross-platform: works on macOS and Linux)."
+run = "swift test"
+
+[tasks.test-coverage]
+description = "Run tests with executor-generated coverage report (requires xcrun; macOS only)."
 run = '''
 #!/usr/bin/env bash
-executor swift test  --enable-code-coverage
+set -euo pipefail
+executor swift test --enable-code-coverage
 executor test report --report-for-type swift ./
 executor coverage swift --verbose
 '''

@@ -32,4 +32,4 @@ testing:
 
 toolchain:
   mise-pinning:
-    description: Toolchain versions live in mise.toml; mise install is the bootstrap step.
+    description: Toolchain versions live in mise.toml (incl. Swift); mise install is the bootstrap step.
