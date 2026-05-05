@@ -31,6 +31,7 @@ struct Config {
     let privateKeyID: String
     let privateKey: String
     let bundleIdentifier: String
+    let saveTo: String?
 
     // swiftlint:disable:next cyclomatic_complexity function_body_length
     static func parse(arguments: [String]) throws -> Config {
@@ -101,7 +102,8 @@ struct Config {
             issuerID: issuerID,
             privateKeyID: keyID,
             privateKey: privateKey,
-            bundleIdentifier: bundleIdentifier
+            bundleIdentifier: bundleIdentifier,
+            saveTo: flagValues["--save-to"]
         )
     }
 }
@@ -117,6 +119,11 @@ private func normalizePrivateKey(_ raw: String) -> String {
 // MARK: - Pipeline
 
 private func runPipeline(config: Config) async throws {
+    if let saveTo = config.saveTo {
+        try await runExportPipeline(config: config, saveTo: saveTo)
+        return
+    }
+
     let api: any AppStoreConnectAPI = try AppleDeveloper.Factory.make(
         issuerID: config.issuerID,
         privateKeyID: config.privateKeyID,
@@ -134,7 +141,10 @@ private func runPipeline(config: Config) async throws {
     print("\nFetching details for profile \(firstProfile.id)…")
     let details = try await api.fetchProfileDetails(id: firstProfile.id)
     print("→ Profile:")
-    print("    bundleId rel:   \(details.profile.bundleIdentifierID ?? "nil")")
+    print("    name:           \(details.profile.name)")
+    print("    uuid:           \(details.profile.uuid)")
+    print("    platform:       \(details.profile.platform.rawValue)")
+    print("    content size:   \(details.profile.content.count) bytes")
     print("→ Hydrated certificates: \(details.certificates.count)")
     for cert in details.certificates {
         print("  • \(cert.id)  \(cert.displayName)  (\(cert.certificateType.rawValue))")
@@ -154,6 +164,31 @@ private func runPipeline(config: Config) async throws {
     print("    certificateType: \(cert.certificateType.rawValue)")
     print("    platform:        \(cert.platform?.rawValue ?? "nil")")
     print("    expirationDate:  \(cert.expirationDate)")
+}
+
+private func runExportPipeline(config: Config, saveTo: String) async throws {
+    let exporter: any BundleArtifactsExporter = try AppleDeveloper.Factory.makeArtifactExporter(
+        issuerID: config.issuerID,
+        privateKeyID: config.privateKeyID,
+        privateKey: config.privateKey
+    )
+
+    print("Exporting artifacts for bundle id \(config.bundleIdentifier) to \(saveTo)…")
+    let outputURL = URL(fileURLWithPath: saveTo, isDirectory: true)
+    let summary = try await exporter.exportArtifacts(
+        forBundleIdentifier: config.bundleIdentifier,
+        to: outputURL
+    )
+    print(
+        "→ Wrote \(summary.profileFiles.count) profile(s) to \(summary.profilesDirectory.path) "
+            + "and \(summary.certificateFiles.count) certificate(s) to \(summary.certificatesDirectory.path)."
+    )
+    if !summary.skippedProfileIDs.isEmpty {
+        print(
+            "→ Skipped \(summary.skippedProfileIDs.count) profile(s) (404 on direct lookup, likely expired): "
+                + summary.skippedProfileIDs.joined(separator: ", ")
+        )
+    }
 }
 
 // MARK: - Errors & helpers
@@ -178,6 +213,8 @@ private func format(_ error: AppleDeveloperError) -> String {
         "unhydratedRelationship(\(name)) missingIDs=\(missingIDs)"
     case let .resourceNotFound(kind, id):
         "resourceNotFound(\(kind)) id=\(id)"
+    case let .fileWriteFailure(path, underlying):
+        "fileWriteFailure(\(path)): \(underlying)"
     }
 }
 
@@ -194,12 +231,19 @@ Flags (override env vars):
   --key-id <id>               APP_STORE_CONNECT_KEY_ID
   --private-key-path <path>   APP_STORE_CONNECT_PRIVATE_KEY_PATH (preferred)
   --private-key <pem-or-b64>  APP_STORE_CONNECT_PRIVATE_KEY
+  --save-to <dir>             Export profiles + certificates as files into <dir>
+                              instead of running the print pipeline
   -h, --help                  Show this help
 
-Pipeline:
+Pipeline (default, when --save-to is not set):
   1. fetchProfiles(forBundleIdentifier: <bundle-identifier>)
   2. fetchProfileDetails(id: <first profile's id>)
   3. fetchCertificate(id: <first hydrated certificate's id>)
+
+Export pipeline (when --save-to <dir> is set):
+  Writes <dir>/<bundle-id>/profiles/<uuid>.<mobileprovision|provisionprofile>
+  and  <dir>/<bundle-id>/certificates/<displayName>.cer for every profile
+  attached to the bundle identifier and each of their certificates.
 
 Exit codes:
   0  Success

@@ -38,5 +38,18 @@ public enum AppleDeveloper {
             let provider = createProvider(usingConfiguration: configuration)
             return AppleDeveloperAPIDefault(provider: provider)
         }
+
+        public static func makeArtifactExporter(
+            issuerID: String,
+            privateKeyID: String,
+            privateKey: String
+        ) throws -> any BundleArtifactsExporter {
+            let api = try make(
+                issuerID: issuerID,
+                privateKeyID: privateKeyID,
+                privateKey: privateKey
+            )
+            return BundleArtifactsExporterDefault(api: api)
+        }
     }
 }

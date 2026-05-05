@@ -8,6 +8,7 @@ public struct Certificate: Sendable, Identifiable, Hashable {
     public let certificateType: CertificateType
     public let platform: Platform?
     public let expirationDate: Date
+    public let content: Data
 
     public init(
         id: String,
@@ -16,7 +17,8 @@ public struct Certificate: Sendable, Identifiable, Hashable {
         serialNumber: String,
         certificateType: CertificateType,
         platform: Platform?,
-        expirationDate: Date
+        expirationDate: Date,
+        content: Data
     ) {
         self.id = id
         self.name = name
@@ -25,5 +27,6 @@ public struct Certificate: Sendable, Identifiable, Hashable {
         self.certificateType = certificateType
         self.platform = platform
         self.expirationDate = expirationDate
+        self.content = content
     }
 }

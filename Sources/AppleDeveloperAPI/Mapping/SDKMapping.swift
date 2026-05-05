@@ -98,14 +98,31 @@ extension CertificateType {
 
 extension Profile {
     init(sdk: SDKProfile) throws {
-        let id = sdk.id
-        let bundleIdentifierID = sdk.relationships?.bundleID?.data?.id
-        let certificateIDs = sdk.relationships?.certificates?.data?.map(\.id) ?? []
+        guard let attributes = sdk.attributes else {
+            throw AppleDeveloperError.decodingFailure(field: "attributes", reason: "missing")
+        }
+        guard let uuid = attributes.uuid else {
+            throw AppleDeveloperError.decodingFailure(field: "uuid", reason: "missing")
+        }
+        guard let name = attributes.name else {
+            throw AppleDeveloperError.decodingFailure(field: "name", reason: "missing")
+        }
+        guard let sdkPlatform = attributes.platform else {
+            throw AppleDeveloperError.decodingFailure(field: "platform", reason: "missing")
+        }
+        guard let base64 = attributes.profileContent else {
+            throw AppleDeveloperError.decodingFailure(field: "profileContent", reason: "missing")
+        }
+        guard let content = Data(base64Encoded: base64) else {
+            throw AppleDeveloperError.decodingFailure(field: "profileContent", reason: "invalid base64")
+        }
 
-        self.init(
-            id: id,
-            bundleIdentifierID: bundleIdentifierID,
-            certificateIDs: certificateIDs
+        try self.init(
+            id: sdk.id,
+            uuid: uuid,
+            name: name,
+            platform: Platform(sdk: sdkPlatform, field: "platform"),
+            content: content
         )
     }
 }
@@ -131,6 +148,12 @@ extension Certificate {
         guard let expirationDate = attributes.expirationDate else {
             throw AppleDeveloperError.decodingFailure(field: "expirationDate", reason: "missing")
         }
+        guard let base64 = attributes.certificateContent else {
+            throw AppleDeveloperError.decodingFailure(field: "certificateContent", reason: "missing")
+        }
+        guard let content = Data(base64Encoded: base64) else {
+            throw AppleDeveloperError.decodingFailure(field: "certificateContent", reason: "invalid base64")
+        }
 
         let platform = try attributes.platform.map { try Platform(sdk: $0, field: "platform") }
 
@@ -141,7 +164,8 @@ extension Certificate {
             serialNumber: serialNumber,
             certificateType: CertificateType(sdk: sdkCertificateType, field: "certificateType"),
             platform: platform,
-            expirationDate: expirationDate
+            expirationDate: expirationDate,
+            content: content
         )
     }
 }
@@ -149,42 +173,17 @@ extension Certificate {
 extension ProfileDetails {
     static func make(from response: SDKProfileResponse) throws -> ProfileDetails {
         let profile = try Profile(sdk: response.data)
-
-        var certificateLookup: [String: SDKCertificate] = [:]
-        for item in response.included ?? [] {
-            if case let .certificate(sdkCert) = item {
-                certificateLookup[sdkCert.id] = sdkCert
-            }
-        }
-
-        var certificates: [Certificate] = []
-        var missing: [String] = []
-        for certID in profile.certificateIDs {
-            if let sdkCert = certificateLookup[certID] {
-                try certificates.append(Certificate(sdk: sdkCert))
-            } else {
-                missing.append(certID)
-            }
-        }
-        if !missing.isEmpty {
-            throw AppleDeveloperError.unhydratedRelationship(
-                name: "certificates",
-                missingIDs: missing
-            )
-        }
-
+        let certificates = try (response.included ?? []).compactMap { item -> SDKCertificate? in
+            if case let .certificate(sdkCert) = item { sdkCert } else { nil }
+        }.map { try Certificate(sdk: $0) }
         return ProfileDetails(profile: profile, certificates: certificates)
     }
 }
 
 enum BundleIDsResponseMapping {
     static func extractProfiles(from response: SDKBundleIDsResponse) throws -> [Profile] {
-        var profiles: [Profile] = []
-        for item in response.included ?? [] {
-            if case let .profile(sdkProfile) = item {
-                try profiles.append(Profile(sdk: sdkProfile))
-            }
-        }
-        return profiles
+        try (response.included ?? []).compactMap { item -> SDKProfile? in
+            if case let .profile(sdkProfile) = item { sdkProfile } else { nil }
+        }.map { try Profile(sdk: $0) }
     }
 }

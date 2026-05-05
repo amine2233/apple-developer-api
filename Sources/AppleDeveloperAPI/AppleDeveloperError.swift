@@ -7,4 +7,5 @@ public enum AppleDeveloperError: Error, Sendable {
     case missingRelationship(name: String, onResourceID: String)
     case unhydratedRelationship(name: String, missingIDs: [String])
     case resourceNotFound(kind: String, id: String)
+    case fileWriteFailure(path: String, underlying: any Error)
 }
