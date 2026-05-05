@@ -35,7 +35,8 @@ echo "Exporting artifacts..."
 description = "Run tests for the appstoreconnect-smoke package."
 run = '''
 #!/usr/bin/env bash
-executor swift test  --enable-code-coverage
+set -euo pipefail
+executor swift test --enable-code-coverage
 executor test report --report-for-type swift ./
 executor coverage swift --verbose
 '''
