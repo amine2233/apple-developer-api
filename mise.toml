@@ -1,3 +1,41 @@
 [tools]
-swiftlint = 'latest'
-swift = '6.1.1'
+swift = '6.3.1'
+"github:executor-cli/executor" = "0.22.0"
+
+[env]
+_.file = ".env.local"
+
+[tasks.format]
+description = "Format the code using SwiftFormat"
+run = "executor format ."
+
+[tasks.smoke]
+description = "Run appstoreconnect-smoke print pipeline against the configured bundle id."
+run = '''
+#!/usr/bin/env bash
+set -euo pipefail
+echo "Building example..."
+swift build
+echo "Running example..."
+"$(swift build --show-bin-path)/appstoreconnect-smoke" fr.intech-consulting.markpages
+'''
+
+[tasks.export]
+description = "Export profiles + certificates as files for the configured bundle id into ./out."
+run = '''
+#!/usr/bin/env bash
+set -euo pipefail
+echo "Building example..."
+swift build
+echo "Exporting artifacts..."
+"$(swift build --show-bin-path)/appstoreconnect-smoke" fr.intech-consulting.markpages --save-to ./out
+'''
+
+[tasks.test]
+description = "Run tests for the appstoreconnect-smoke package."
+run = '''
+#!/usr/bin/env bash
+executor swift test  --enable-code-coverage
+executor test report --report-for-type swift ./
+executor coverage swift --verbose
+'''

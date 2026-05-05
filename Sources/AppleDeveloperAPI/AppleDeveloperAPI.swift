@@ -1,19 +1,55 @@
-import AppStoreConnect_Swift_SDK
+@preconcurrency import AppStoreConnect_Swift_SDK
 import Foundation
 
-public protocol AppStoreConnectAPI: Sendable {
-    func fetchBundleIds(bundleID: String) async throws
-    func fetchProfile(id: String) async throws
-    func fetchCertificate(id: String) async throws
-}
+public enum AppleDeveloper {
+    public enum Factory {
+        public static func createConfiguration(
+            issuerID: String,
+            privateKeyID: String,
+            privateKey: String
+        ) throws -> APIConfiguration {
+            do {
+                return try APIConfiguration(
+                    issuerID: issuerID,
+                    privateKeyID: privateKeyID,
+                    privateKey: privateKey
+                )
+            } catch {
+                throw AppleDeveloperError.invalidConfiguration(
+                    reason: String(describing: error)
+                )
+            }
+        }
 
-struct AppleDeveloperAPIDefault: AppleDeveloperAPI {
-    private let configuration: APIConfiguration
-    private let provider: APIProvider
+        public static func createProvider(usingConfiguration configuration: APIConfiguration) -> APIProvider {
+            APIProvider(configuration: configuration)
+        }
 
-    init(configuration: APIConfiguration) {
-        self.configuration = configuration
-        self.provider = configuration
+        public static func make(
+            issuerID: String,
+            privateKeyID: String,
+            privateKey: String
+        ) throws -> any AppStoreConnectAPI {
+            let configuration = try createConfiguration(
+                issuerID: issuerID,
+                privateKeyID: privateKeyID,
+                privateKey: privateKey
+            )
+            let provider = createProvider(usingConfiguration: configuration)
+            return AppleDeveloperAPIDefault(provider: provider)
+        }
+
+        public static func makeArtifactExporter(
+            issuerID: String,
+            privateKeyID: String,
+            privateKey: String
+        ) throws -> any BundleArtifactsExporter {
+            let api = try make(
+                issuerID: issuerID,
+                privateKeyID: privateKeyID,
+                privateKey: privateKey
+            )
+            return BundleArtifactsExporterDefault(api: api)
+        }
     }
 }
-

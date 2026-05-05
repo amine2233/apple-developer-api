@@ -1,0 +1,35 @@
+# Agent OS Standards Index
+
+architecture:
+  namespaced-factory:
+    description: Sole construction seam for upstream SDK config/provider types.
+  protocol-default-pair:
+    description: Public Sendable protocol + internal *Default struct; depend on the protocol.
+  sdk-seam-isolation:
+    description: Contain AppStoreConnect_Swift_SDK behind the wrapper; @preconcurrency import only where used.
+
+concurrency:
+  async-throws-contract:
+    description: Public methods are async throws; no callbacks/Combine/Result.
+  sendable-protocols:
+    description: Public protocols inherit Sendable; signature types Sendable too.
+  strict-concurrency-mode:
+    description: Package locked at swiftLanguageModes [.v6]; fix diagnostics, don't suppress.
+  value-type-impls:
+    description: Default impls are structs with private let; use actor (not class) when needed.
+
+naming:
+  any-existentials:
+    description: Protocol-typed declarations always use any Protocol; no implicit existentials.
+  caseless-enum-namespaces:
+    description: Namespaces are caseless enums; max 2 levels deep.
+  single-error-type:
+    description: One public Sendable Error enum per module; wrap SDK errors in a case.
+
+testing:
+  swift-testing-only:
+    description: All tests use @Test/#expect; no XCTest, Quick, or Nimble.
+
+toolchain:
+  mise-pinning:
+    description: Toolchain versions live in mise.toml; mise install is the bootstrap step.
