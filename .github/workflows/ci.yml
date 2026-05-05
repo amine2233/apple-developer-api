@@ -9,6 +9,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  MISE_EXPERIMENTAL: 'true'
+
 jobs:
   test:
     name: Test (${{ matrix.os }})
@@ -21,8 +24,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up mise (installs Swift + executor-cli)
+      - name: Set up mise (cached)
         uses: jdx/mise-action@v2
+        with:
+          experimental: true
+          cache: true
+          cache_key_prefix: mise-${{ matrix.os }}
 
       - name: Show Swift version
         run: swift --version
