@@ -1,4 +1,7 @@
 [tools]
-swiftlint = 'latest'
 swift = '6.1.1'
 "github:executor-cli/executor" = "0.22.0"
+
+[tasks.format]
+description = "Format the code using SwiftFormat"
+run = "executor format ."
