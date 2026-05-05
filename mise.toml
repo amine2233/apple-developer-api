@@ -1,7 +1,21 @@
 [tools]
-swift = '6.1.1'
+swift = '6.3.1'
 "github:executor-cli/executor" = "0.22.0"
+
+[env]
+_.file = ".env.local"
 
 [tasks.format]
 description = "Format the code using SwiftFormat"
 run = "executor format ."
+
+[tasks.smoke]
+description = "Run appstoreconnect-smoke against live App Store Connect. Usage: mise run smoke -- <bundle-id>"
+run = '''
+#!/usr/bin/env bash
+set -euo pipefail
+echo "Building example..."
+swift build
+echo "Running example..."
+"$(swift build --show-bin-path)/appstoreconnect-smoke" fr.intech-consulting.markpages
+'''

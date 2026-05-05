@@ -24,5 +24,19 @@ public enum AppleDeveloper {
         public static func createProvider(usingConfiguration configuration: APIConfiguration) -> APIProvider {
             APIProvider(configuration: configuration)
         }
+
+        public static func make(
+            issuerID: String,
+            privateKeyID: String,
+            privateKey: String
+        ) throws -> any AppStoreConnectAPI {
+            let configuration = try createConfiguration(
+                issuerID: issuerID,
+                privateKeyID: privateKeyID,
+                privateKey: privateKey
+            )
+            let provider = createProvider(usingConfiguration: configuration)
+            return AppleDeveloperAPIDefault(provider: provider)
+        }
     }
 }

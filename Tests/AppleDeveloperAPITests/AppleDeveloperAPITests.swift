@@ -78,58 +78,8 @@ struct ProfileMappingTests {
         let profile = try Profile(sdk: sdk)
 
         #expect(profile.id == "PROFILE-1")
-        #expect(profile.name == "Acme iOS Dev")
-        #expect(profile.uuid == "B5DBE8B5-43A0-4E0E-B7CE-1234567890AB")
-        #expect(profile.platform == .iOS)
-        #expect(profile.profileType == .iOSAppDevelopment)
-        #expect(profile.state == .active)
-        #expect(profile.expirationDate == referenceDate)
         #expect(profile.bundleIdentifierID == "BUNDLE-1")
         #expect(profile.certificateIDs == ["CERT-1", "CERT-2"])
-    }
-
-    @Test
-    func throwsWhenAttributesMissing() {
-        let sdk = AppStoreConnect_Swift_SDK.Profile(
-            type: .profiles,
-            id: "PROFILE-X",
-            attributes: nil,
-            relationships: nil
-        )
-        do {
-            _ = try Profile(sdk: sdk)
-            Issue.record("Expected throw, got success")
-        } catch let AppleDeveloperError.decodingFailure(field, _) {
-            #expect(field == "attributes")
-        } catch {
-            Issue.record("Unexpected error: \(error)")
-        }
-    }
-
-    @Test
-    func throwsWhenNameMissing() {
-        let sdk = makeSDKProfile(name: nil)
-        do {
-            _ = try Profile(sdk: sdk)
-            Issue.record("Expected throw, got success")
-        } catch let AppleDeveloperError.decodingFailure(field, _) {
-            #expect(field == "name")
-        } catch {
-            Issue.record("Unexpected error: \(error)")
-        }
-    }
-
-    @Test
-    func throwsWhenExpirationDateMissing() {
-        let sdk = makeSDKProfile(expirationDate: nil)
-        do {
-            _ = try Profile(sdk: sdk)
-            Issue.record("Expected throw, got success")
-        } catch let AppleDeveloperError.decodingFailure(field, _) {
-            #expect(field == "expirationDate")
-        } catch {
-            Issue.record("Unexpected error: \(error)")
-        }
     }
 }
 
@@ -251,7 +201,6 @@ struct BundleIDsResponseMappingTests {
         let profiles = try BundleIDsResponseMapping.extractProfiles(from: response)
 
         #expect(profiles.map(\.id) == ["PROFILE-1", "PROFILE-2"])
-        #expect(profiles.map(\.profileType) == [.iOSAppDevelopment, .iOSAppStore])
     }
 
     @Test

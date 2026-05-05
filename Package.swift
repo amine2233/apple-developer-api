@@ -26,6 +26,11 @@ let package = Package(
                 .product(name: "AppStoreConnect-Swift-SDK", package: "appstoreconnect-swift-sdk")
             ]
         ),
+        .executableTarget(
+            name: "appstoreconnect-smoke",
+            dependencies: ["AppleDeveloperAPI"],
+            path: "Sources/appstoreconnect-smoke"
+        ),
         .testTarget(
             name: "AppleDeveloperAPITests",
             dependencies: ["AppleDeveloperAPI"]

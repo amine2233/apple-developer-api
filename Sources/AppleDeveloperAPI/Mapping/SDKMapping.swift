@@ -99,39 +99,11 @@ extension CertificateType {
 extension Profile {
     init(sdk: SDKProfile) throws {
         let id = sdk.id
-        guard let attributes = sdk.attributes else {
-            throw AppleDeveloperError.decodingFailure(field: "attributes", reason: "missing")
-        }
-        guard let name = attributes.name else {
-            throw AppleDeveloperError.decodingFailure(field: "name", reason: "missing")
-        }
-        guard let uuid = attributes.uuid else {
-            throw AppleDeveloperError.decodingFailure(field: "uuid", reason: "missing")
-        }
-        guard let sdkPlatform = attributes.platform else {
-            throw AppleDeveloperError.decodingFailure(field: "platform", reason: "missing")
-        }
-        guard let sdkProfileType = attributes.profileType else {
-            throw AppleDeveloperError.decodingFailure(field: "profileType", reason: "missing")
-        }
-        guard let sdkProfileState = attributes.profileState else {
-            throw AppleDeveloperError.decodingFailure(field: "profileState", reason: "missing")
-        }
-        guard let expirationDate = attributes.expirationDate else {
-            throw AppleDeveloperError.decodingFailure(field: "expirationDate", reason: "missing")
-        }
-
         let bundleIdentifierID = sdk.relationships?.bundleID?.data?.id
         let certificateIDs = sdk.relationships?.certificates?.data?.map(\.id) ?? []
 
-        try self.init(
+        self.init(
             id: id,
-            name: name,
-            uuid: uuid,
-            platform: Platform(sdk: sdkPlatform, field: "platform"),
-            profileType: ProfileType(sdk: sdkProfileType, field: "profileType"),
-            state: ProfileState(sdk: sdkProfileState, field: "profileState"),
-            expirationDate: expirationDate,
             bundleIdentifierID: bundleIdentifierID,
             certificateIDs: certificateIDs
         )

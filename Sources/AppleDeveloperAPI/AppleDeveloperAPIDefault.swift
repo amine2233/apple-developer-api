@@ -12,6 +12,7 @@ struct AppleDeveloperAPIDefault: AppStoreConnectAPI {
         let request = APIEndpoint.v1.bundleIDs.get(
             parameters: APIEndpoint.V1.BundleIDs.GetParameters(
                 filterIdentifier: [bundleIdentifier],
+                fieldsProfiles: [.bundleID],
                 include: [.profiles]
             )
         )
