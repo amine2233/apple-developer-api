@@ -9,7 +9,9 @@ struct BundleArtifactsExporterDefault: BundleArtifactsExporter {
 
     func exportArtifacts(
         forBundleIdentifier bundleIdentifier: String,
-        to outputDirectory: URL
+        to outputDirectory: URL,
+        platforms: Set<Platform>,
+        distributionKinds: Set<DistributionKind>
     ) async throws -> ArtifactExportSummary {
         let bundleDir = outputDirectory.appendingPathComponent(bundleIdentifier, isDirectory: true)
         let profilesDir = bundleDir.appendingPathComponent("profiles", isDirectory: true)
@@ -18,15 +20,15 @@ struct BundleArtifactsExporterDefault: BundleArtifactsExporter {
         try Self.makeDirectory(certificatesDir)
 
         let profiles = try await api.fetchProfiles(forBundleIdentifier: bundleIdentifier)
-        var profileFiles: [URL] = []
-        for profile in profiles {
-            profileFiles.append(try Self.writeProfile(profile, into: profilesDir))
-        }
 
-        var seenCertificateIDs: Set<String> = []
+        var profileFiles: [URL] = []
         var certificateFiles: [URL] = []
+        var seenCertificateIDs: Set<String> = []
         var skippedProfileIDs: [String] = []
+
         for profile in profiles {
+            guard platforms.contains(profile.platform) else { continue }
+
             let details: ProfileDetails
             do {
                 details = try await api.fetchProfileDetails(id: profile.id)
@@ -34,8 +36,13 @@ struct BundleArtifactsExporterDefault: BundleArtifactsExporter {
                 skippedProfileIDs.append(profile.id)
                 continue
             }
-            for certificate in details.certificates where seenCertificateIDs.insert(certificate.id).inserted {
-                certificateFiles.append(try Self.writeCertificate(certificate, into: certificatesDir))
+
+            let kinds = Self.classify(certs: details.certificates)
+            guard !kinds.isDisjoint(with: distributionKinds) else { continue }
+
+            try profileFiles.append(Self.writeProfile(profile, into: profilesDir))
+            for cert in details.certificates where seenCertificateIDs.insert(cert.id).inserted {
+                try certificateFiles.append(Self.writeCertificate(cert, into: certificatesDir))
             }
         }
 
@@ -89,10 +96,30 @@ extension BundleArtifactsExporterDefault {
     static func profileExtension(for platform: Platform) -> String {
         switch platform {
         case .macOS, .universal:
-            return "provisionprofile"
+            "provisionprofile"
         case .iOS, .services:
-            return "mobileprovision"
+            "mobileprovision"
         }
+    }
+
+    static func classify(certs: [Certificate]) -> Set<DistributionKind> {
+        var kinds: Set<DistributionKind> = []
+        for cert in certs {
+            switch cert.certificateType {
+            case .development, .iOSDevelopment, .macAppDevelopment:
+                kinds.insert(.development)
+            case .distribution, .iOSDistribution,
+                 .macAppDistribution, .macInstallerDistribution,
+                 .developerIDApplication, .developerIDApplicationG2,
+                 .developerIDKext, .developerIDKextG2:
+                kinds.insert(.distribution)
+            case .applePay, .applePayMerchantIdentity, .applePayPspIdentity, .applePayRSA,
+                 .identityAccess, .passTypeID, .passTypeIDWithNFC:
+                continue
+            }
+        }
+        if kinds.isEmpty { kinds.insert(.distribution) }
+        return kinds
     }
 
     static func sanitize(_ name: String) -> String {
