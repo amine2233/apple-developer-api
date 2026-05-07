@@ -110,9 +110,18 @@ let exporter = try AppleDeveloper.Factory.makeArtifactExporter(
     issuerID: ..., privateKeyID: ..., privateKey: ...
 )
 
+// Export using default filters (iOS/macOS, development/distribution)
 let summary = try await exporter.exportArtifacts(
     forBundleIdentifier: "com.acme.app",
     to: URL(fileURLWithPath: "./out", isDirectory: true)
+)
+
+// Or filter by platform and distribution kind
+let filteredSummary = try await exporter.exportArtifacts(
+    forBundleIdentifier: "com.acme.app",
+    to: URL(fileURLWithPath: "./out", isDirectory: true),
+    platforms: [.iOS],
+    distributionKinds: [.distribution]
 )
 
 print("Wrote \(summary.profileFiles.count) profiles, "
