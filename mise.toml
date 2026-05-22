@@ -71,6 +71,10 @@ run = "executor linting documentation ./Sources --reporter console"
 description = "Lint source code"
 run = "executor linting code ./Sources --reporter console"
 
+[tasks.check_commit_title]
+description = "Lint the latest commit title against the project's convention."
+run = "executor check-ci commit-title"
+
 [tasks.build_documentations]
 description = "Build the documentation using docc"
 usage = '''
