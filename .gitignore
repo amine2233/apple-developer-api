@@ -8,3 +8,6 @@ DerivedData/
 .netrc
 .env.local
 out
+public
+*.log
+*.p8
