@@ -36,7 +36,8 @@ public enum AppleDeveloper {
 
         /// Wraps a configuration in the underlying SDK's `APIProvider`.
         ///
-        /// - Parameter configuration: A configuration produced by ``createConfiguration(issuerID:privateKeyID:privateKey:)``.
+        /// - Parameter configuration: A configuration produced by
+        /// ``createConfiguration(issuerID:privateKeyID:privateKey:)``.
         /// - Returns: A provider that can issue authenticated requests.
         public static func createProvider(usingConfiguration configuration: APIConfiguration) -> APIProvider {
             APIProvider(configuration: configuration)
@@ -67,7 +68,8 @@ public enum AppleDeveloper {
             return AppleDeveloperAPIDefault(provider: provider)
         }
 
-        /// Builds a ``BundleArtifactsExporter`` for downloading profiles and certificates tied to a bundle ID.
+        /// Builds a ``BundleArtifactsExporter`` for downloading profiles and certificates tied to a bundle
+        /// ID.
         ///
         /// - Parameters:
         ///   - issuerID: The issuer ID of the API key.

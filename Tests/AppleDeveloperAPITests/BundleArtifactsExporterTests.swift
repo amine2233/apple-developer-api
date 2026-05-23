@@ -140,7 +140,7 @@ struct CertificateWriterTests {
         )
         let url = try BundleArtifactsExporterDefault.writeCertificate(cert, into: dir)
 
-        #expect(url == dir.appendingPathComponent("Apple Distribution_ Acme_Corp.cer"))
+        #expect(url == dir.appendingPathComponent("Apple Distribution_ Acme_Corp - CID.cer"))
         let written = try Data(contentsOf: url)
         #expect(String(data: written, encoding: .utf8) == "certbytes")
     }
@@ -271,7 +271,7 @@ struct ExporterIntegrationFilterTests {
 
         #expect(summary.profileFiles.count == 1)
         #expect(summary.profileFiles.first?.lastPathComponent == "UUID-DEV.mobileprovision")
-        #expect(summary.certificateFiles.map(\.lastPathComponent) == ["Dev Cert.cer"])
+        #expect(summary.certificateFiles.map(\.lastPathComponent) == ["Dev Cert - CERT-DEV.cer"])
     }
 
     @Test
@@ -332,6 +332,55 @@ struct ExporterIntegrationFilterTests {
 
         #expect(summary.profileFiles.count == 2)
         #expect(summary.certificateFiles.count == 2)
+    }
+
+    @Test
+    func writesBothCertificatesWhenDisplayNamesCollide() async throws {
+        let dir = makeTempDir()
+        defer { try? FileManager.default.removeItem(at: dir) }
+
+        let devProfile = makeProfile(id: "P-DEV", uuid: "UUID-DEV", platform: .iOS)
+        let distProfile = makeProfile(id: "P-DIST", uuid: "UUID-DIST", platform: .iOS)
+        let sharedName = "Acme"
+        let dCert = makeCertificate(
+            id: "CERT-DEV",
+            displayName: sharedName,
+            certificateType: .iOSDevelopment,
+            content: Data("dev-bytes".utf8)
+        )
+        let xCert = makeCertificate(
+            id: "CERT-DIST",
+            displayName: sharedName,
+            certificateType: .iOSDistribution,
+            content: Data("dist-bytes".utf8)
+        )
+
+        let mock = MockAppStoreConnectAPI(
+            profiles: [devProfile, distProfile],
+            detailsByID: [
+                "P-DEV": ProfileDetails(profile: devProfile, certificates: [dCert]),
+                "P-DIST": ProfileDetails(profile: distProfile, certificates: [xCert])
+            ],
+            certificatesByID: ["CERT-DEV": dCert, "CERT-DIST": xCert]
+        )
+
+        let summary = try await makeExporter(api: mock).exportArtifacts(
+            forBundleIdentifier: "com.acme.app",
+            to: dir,
+            platforms: [.iOS],
+            distributionKinds: [.development, .distribution]
+        )
+
+        let filenames = Set(summary.certificateFiles.map(\.lastPathComponent))
+        #expect(filenames == ["Acme - CERT-DEV.cer", "Acme - CERT-DIST.cer"])
+        #expect(summary.certificateFiles.count == 2)
+
+        let devURL = try #require(summary.certificateFiles
+            .first { $0.lastPathComponent == "Acme - CERT-DEV.cer" })
+        let distURL = try #require(summary.certificateFiles
+            .first { $0.lastPathComponent == "Acme - CERT-DIST.cer" })
+        #expect(try Data(contentsOf: devURL) == Data("dev-bytes".utf8))
+        #expect(try Data(contentsOf: distURL) == Data("dist-bytes".utf8))
     }
 
     @Test
