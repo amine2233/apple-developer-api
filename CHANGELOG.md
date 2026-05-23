@@ -1,3 +1,10 @@
+## [1.0.2](https://github.com/amine2233/apple-developer-api/compare/1.0.1...1.0.2) (2026-05-23)
+
+
+### Bug Fixes
+
+* erase certificates with the same name ([#9](https://github.com/amine2233/apple-developer-api/issues/9)) ([a5ce280](https://github.com/amine2233/apple-developer-api/commit/a5ce280704be391177b35ac4c7d6902a152e843d))
+
 ## [1.0.1](https://github.com/amine2233/apple-developer-api/compare/1.0.0...1.0.1) (2026-05-23)
 
 
