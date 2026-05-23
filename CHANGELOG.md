@@ -1,3 +1,10 @@
+## [1.0.1](https://github.com/amine2233/apple-developer-api/compare/1.0.0...1.0.1) (2026-05-23)
+
+
+### Bug Fixes
+
+* generate tag without prefix v ([#8](https://github.com/amine2233/apple-developer-api/issues/8)) ([591a07d](https://github.com/amine2233/apple-developer-api/commit/591a07dad23f2c950e63001930407af754aea109))
+
 # 1.0.0 (2026-05-22)
 
 
