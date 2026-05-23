@@ -83,7 +83,7 @@ extension BundleArtifactsExporterDefault {
 
     static func writeCertificate(_ certificate: Certificate, into directory: URL) throws -> URL {
         let sanitized = sanitize(certificate.displayName)
-        let basename = sanitized.isEmpty ? certificate.id : sanitized
+        let basename = sanitized.isEmpty ? certificate.id : "\(sanitized) - \(certificate.id)"
         let target = directory.appendingPathComponent("\(basename).cer")
         do {
             try certificate.content.write(to: target, options: .atomic)
